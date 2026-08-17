@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Blackjack Counter</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0d0e10;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 20px;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: #777b82;
+            margin-bottom: 35px;
+        }
+
+        /* COUNT */
+
+        .count {
+            font-size: 110px;
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -6px;
+
+            margin-bottom: 45px;
+
+            transition:
+                color 0.2s ease,
+                transform 0.08s ease;
+        }
+
+        .count.positive {
+            color: #6fba82;
+        }
+
+        .count.negative {
+            color: #c96c72;
+        }
+
+        .count.neutral {
+            color: #ffffff;
+        }
+
+        .count.bump {
+            transform: scale(1.06);
+        }
+
+        /* + / - BUTTONS */
+
+        .main-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        button {
+            border: none;
+            outline: none;
+
+            color: white;
+            background: #181a1e;
+
+            border: 1px solid #292c32;
+
+            border-radius: 18px;
+
+            font-size: 36px;
+            font-weight: 400;
+
+            height: 90px;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.08s ease,
+                background 0.15s ease;
+        }
+
+        button:active {
+            transform: scale(0.94);
+            background: #202329;
+        }
+
+        /* SMALL BUTTONS */
+
+        .secondary-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+
+            margin-top: 14px;
+        }
+
+        .secondary-buttons button {
+            height: 55px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #8b9098;
+        }
+
+        .undo {
+            color: #b5bac2 !important;
+        }
+
+        .reset {
+            color: #b5bac2 !important;
+        }
+
+        /* RESET SHOE */
+
+        .shoe-reset {
+            width: 100%;
+            margin-top: 12px;
+
+            height: 52px;
+
+            font-size: 14px !important;
+
+            color: #666b73 !important;
+
+            background: transparent;
+            border-color: transparent;
+        }
+
+        .shoe-reset:active {
+            background: #17191d;
+        }
+
+        /* ANIMATION */
+
+        @keyframes bump {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.07);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app">
+
+        <div class="title">
+            BLACKJACK
+        </div>
+
+        <div id="count" class="count neutral">
+            0
+        </div>
+
+        <div class="main-buttons">
+
+            <button onclick="changeCount(-1)">
+                −
+            </button>
+
+            <button onclick="changeCount(1)">
+                +
+            </button>
+
+        </div>
+
+        <div class="secondary-buttons">
+
+            <button class="undo" onclick="undo()">
+                Undo
+            </button>
+
+            <button class="reset" onclick="resetCount()">
+                Reset Count
+            </button>
+
+        </div>
+
+        <button class="shoe-reset" onclick="resetShoe()">
+            Reset Shoe
+        </button>
+
+    </div>
+
+
+    <script>
+
+        let count = Number(localStorage.getItem("blackjackCount")) || 0;
+
+        let history = JSON.parse(
+            localStorage.getItem("blackjackHistory") || "[]"
+        );
+
+        const countDisplay = document.getElementById("count");
+
+
+        function updateDisplay(animate = true) {
+
+            if (count > 0) {
+                countDisplay.textContent = "+" + count;
+                countDisplay.className = "count positive";
+            }
+
+            else if (count < 0) {
+                countDisplay.textContent = count;
+                countDisplay.className = "count negative";
+            }
+
+            else {
+                countDisplay.textContent = "0";
+                countDisplay.className = "count neutral";
+            }
+
+
+            if (animate) {
+
+                void countDisplay.offsetWidth;
+
+                countDisplay.classList.add("bump");
+
+                setTimeout(() => {
+                    countDisplay.classList.remove("bump");
+                }, 100);
+            }
+
+
+            localStorage.setItem(
+                "blackjackCount",
+                count
+            );
+
+            localStorage.setItem(
+                "blackjackHistory",
+                JSON.stringify(history)
+            );
+        }
+
+
+        function changeCount(amount) {
+
+            history.push(count);
+
+            count += amount;
+
+            updateDisplay();
+        }
+
+
+        function undo() {
+
+            if (history.length === 0) {
+                return;
+            }
+
+            count = history.pop();
+
+            updateDisplay();
+        }
+
+
+        function resetCount() {
+
+            history.push(count);
+
+            count = 0;
+
+            updateDisplay();
+        }
+
+
+        function resetShoe() {
+
+            const confirmed = confirm(
+                "Reset the shoe and start a new count?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            count = 0;
+
+            history = [];
+
+            updateDisplay();
+        }
+
+
+        updateDisplay(false);
+
+    </script>
+
+</body>
+</html>
